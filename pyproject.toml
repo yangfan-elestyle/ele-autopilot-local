@@ -1,12 +1,15 @@
 [project]
 name = "ele-autopilot-local"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.1.2"
+description = "Local autopilot service for browser automation"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
     "browser-use>=0.11.3",
     "fastapi>=0.128.0",
     "langchain-openai>=1.1.7",
     "uvicorn[standard]>=0.40.0",
 ]
+
+[project.scripts]
+ele-autopilot = "main:cli"

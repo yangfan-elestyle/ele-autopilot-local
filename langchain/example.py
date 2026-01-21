@@ -18,43 +18,43 @@ from examples.models.langchain.chat import ChatLangchain
 
 
 async def main():
-	"""Basic example using ChatLangchain with OpenAI through LangChain."""
+    """Basic example using ChatLangchain with OpenAI through LangChain."""
 
-	# Create a LangChain model (OpenAI)
-	langchain_model = ChatOpenAI(
-		model='gpt-4.1-mini',
-		temperature=0.1,
-	)
+    # Create a LangChain model (OpenAI)
+    langchain_model = ChatOpenAI(
+        model="gpt-4.1-mini",
+        temperature=0.1,
+    )
 
-	# Wrap it with ChatLangchain to make it compatible with browser-use
-	llm = ChatLangchain(chat=langchain_model)
+    # Wrap it with ChatLangchain to make it compatible with browser-use
+    llm = ChatLangchain(chat=langchain_model)
 
-	# Create a simple task
-	task = "Go to google.com and search for 'browser automation with Python'"
+    # Create a simple task
+    task = "Go to google.com and search for 'browser automation with Python'"
 
-	# Create and run the agent
-	agent = Agent(
-		task=task,
-		llm=llm,
-	)
+    # Create and run the agent
+    agent = Agent(
+        task=task,
+        llm=llm,
+    )
 
-	print(f'🚀 Starting task: {task}')
-	print(f'🤖 Using model: {llm.name} (provider: {llm.provider})')
+    print(f"🚀 Starting task: {task}")
+    print(f"🤖 Using model: {llm.name} (provider: {llm.provider})")
 
-	# Run the agent
-	history = await agent.run()
+    # Run the agent
+    history = await agent.run()
 
-	print(f'✅ Task completed! Steps taken: {len(history.history)}')
+    print(f"✅ Task completed! Steps taken: {len(history.history)}")
 
-	# Print the final result if available
-	if history.final_result():
-		print(f'📋 Final result: {history.final_result()}')
+    # Print the final result if available
+    if history.final_result():
+        print(f"📋 Final result: {history.final_result()}")
 
-		return history
+        return history
 
 
-if __name__ == '__main__':
-	print('🌐 Browser-use LangChain Integration Example')
-	print('=' * 45)
+if __name__ == "__main__":
+    print("🌐 Browser-use LangChain Integration Example")
+    print("=" * 45)
 
-	asyncio.run(main())
+    asyncio.run(main())

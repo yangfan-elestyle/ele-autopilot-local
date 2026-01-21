@@ -9,7 +9,20 @@ set -o pipefail
 IFS=$'\n'
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-cd "$SCRIPT_DIR"
+find_repo_root() {
+  local dir="$SCRIPT_DIR"
+  while [[ "$dir" != "/" ]]; do
+    if [[ -f "$dir/pyproject.toml" || -d "$dir/.git" ]]; then
+      echo "$dir"
+      return 0
+    fi
+    dir="$(cd "$dir/.." >/dev/null 2>&1 && pwd)"
+  done
+  echo "$SCRIPT_DIR"
+}
+
+REPO_ROOT="$(find_repo_root)"
+cd "$REPO_ROOT"
 
 ensure_uv() {
   if command -v uv >/dev/null 2>&1; then
