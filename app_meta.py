@@ -31,4 +31,3 @@ def project_name() -> str:
 
 def project_version() -> str:
     return get_project_info()["version"]
-

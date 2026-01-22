@@ -27,7 +27,9 @@ if __name__ == "__main__":
         "--path", required=True, nargs="+", help="Path(s) to task file(s)"
     )
     parser.add_argument("--max-steps", type=int, default=120, help="Max steps per task")
-    parser.add_argument("--headless", action="store_true", help="Run browser in headless mode")
+    parser.add_argument(
+        "--headless", action="store_true", help="Run browser in headless mode"
+    )
     args = parser.parse_args()
 
     # 支持多个任务文件
