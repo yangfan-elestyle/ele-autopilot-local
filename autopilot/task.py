@@ -109,6 +109,7 @@ class TaskRunner:
                 task=task,
                 llm=llm,
                 browser=browser,
+                max_actions_per_step=1,
             )
 
             result = await agent.run(max_steps=self.config.max_steps)

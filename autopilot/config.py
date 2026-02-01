@@ -8,5 +8,5 @@ from pydantic import BaseModel
 class JobConfig(BaseModel):
     """Job 执行配置（会被 Job/TaskRunner 读取）"""
 
-    max_steps: int = 120
+    max_steps: int = 12000
     headless: bool = False

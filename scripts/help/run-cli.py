@@ -41,7 +41,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--path",
         nargs="+",
-        help="可选：指定 task 文件路径列表；不传则默认读取 run-cli-tasks 下所有 txt",
+        help="指定 task 文件路径列表",
+    )
+    parser.add_argument(
+        "--directory",
+        help="指定包含 task 文件的目录，读取目录下所有 txt 文件",
     )
     parser.add_argument("--max-steps", type=int, default=120, help="Max steps per task")
     parser.add_argument(
@@ -49,15 +53,21 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # 必须指定 --path 或 --directory
+    if not args.path and not args.directory:
+        parser.error("必须指定 --path 或 --directory 之一")
+
     # 支持多个任务文件
     tasks = []
     if args.path:
         task_paths = [Path(path) for path in args.path]
     else:
-        task_dir = Path(__file__).resolve().parent / "run-cli-tasks"
+        task_dir = Path(args.directory)
+        if not task_dir.is_dir():
+            raise NotADirectoryError(f"指定的目录不存在：{task_dir}")
         task_paths = sorted(task_dir.glob("*.txt"), key=lambda p: p.name)
         if not task_paths:
-            raise FileNotFoundError(f"未找到任务文件：{task_dir}/**/*.txt")
+            raise FileNotFoundError(f"未找到任务文件：{task_dir}/*.txt")
 
     for path in task_paths:
         task_content = path.read_text(encoding="utf-8")
