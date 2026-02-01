@@ -6,6 +6,7 @@
 - 初始化 LLM / Browser 并执行单个任务
 """
 
+import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime
@@ -16,7 +17,11 @@ from browser_use import Agent, Browser
 from langchain.chat import ChatLangchain
 from langchain_openai import ChatOpenAI
 
+from utils.chrome_profile import resolve_chrome_user_data_dir
+
 from .config import JobConfig
+
+logger = logging.getLogger(__name__)
 
 
 class TaskStatus(str, Enum):
@@ -64,13 +69,18 @@ class TaskRunner:
         chrome_executable_path = os.getenv("CHROME_EXECUTABLE_PATH")
         chrome_user_data_dir = os.getenv("CHROME_USER_DATA_DIR")
         chrome_profile_directory = os.getenv("CHROME_PROFILE_DIRECTORY")
-        if chrome_user_data_dir:
-            chrome_user_data_dir = os.path.expanduser(chrome_user_data_dir)
+        profile_directory = chrome_profile_directory or "Default"
+        resolved_user_data_dir = resolve_chrome_user_data_dir(
+            chrome_executable_path=chrome_executable_path,
+            chrome_user_data_dir=chrome_user_data_dir,
+            profile_directory=profile_directory,
+            log=logger,
+        )
 
         return Browser(
             executable_path=chrome_executable_path,
-            user_data_dir=chrome_user_data_dir,
-            profile_directory=chrome_profile_directory,
+            user_data_dir=resolved_user_data_dir,
+            profile_directory=profile_directory,
             headless=self.config.headless,
             keep_alive=False,
         )
