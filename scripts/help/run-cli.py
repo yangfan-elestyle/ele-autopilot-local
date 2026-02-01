@@ -20,8 +20,8 @@ if str(_REPO_ROOT) not in sys.path:
 from autopilot import Job, JobConfig
 
 
-async def main(tasks: list[str], max_steps: int = 120, headless: bool = False):
-    config = JobConfig(max_steps=max_steps, headless=headless)
+async def main(tasks: list[str], headless: bool = False):
+    config = JobConfig(headless=headless)
     job = Job.create(tasks=tasks, config=config)
     await job.run()
 
@@ -47,7 +47,6 @@ if __name__ == "__main__":
         "--directory",
         help="指定包含 task 文件的目录，读取目录下所有 txt 文件",
     )
-    parser.add_argument("--max-steps", type=int, default=120, help="Max steps per task")
     parser.add_argument(
         "--headless", action="store_true", help="Run browser in headless mode"
     )
@@ -73,4 +72,4 @@ if __name__ == "__main__":
         task_content = path.read_text(encoding="utf-8")
         tasks.append(task_content)
 
-    asyncio.run(main(tasks, args.max_steps, args.headless))
+    asyncio.run(main(tasks, args.headless))
