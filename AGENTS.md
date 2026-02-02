@@ -70,7 +70,13 @@
 
 ## 配置与安全
 
-- `.env` 已被 `.gitignore` 忽略，勿提交密钥；参考 `.env.template` 配置 LLM 与 Chrome 参数。
-- LLM 必需配置：`ELE_LLM_AUTOPILOT_MODEL`、`ELE_LLM_API_KEY`、`ELE_LLM_BASE_URL`。
-- Chrome 可选配置：`CHROME_EXECUTABLE_PATH`、`CHROME_USER_DATA_DIR`（支持 `~` 展开）、`CHROME_PROFILE_DIRECTORY`。
+- `.env` 已被 `.gitignore` 忽略，勿提交密钥；参考 `.env.template` 配置 API Key 与 Chrome 参数。
+- 环境变量配置：
+  - `ELE_LLM_API_KEY`：Gemini API 密钥（必需）
+  - `CHROME_EXECUTABLE_PATH`、`CHROME_USER_DATA_DIR`（支持 `~` 展开）、`CHROME_PROFILE_DIRECTORY`：Chrome 可选配置
+- API 运行时配置（通过 HTTP 请求传入，见 `autopilot/config.py`）：
+  - `gemini_model`：Gemini 模型名称，默认 `gemini-3-flash-preview`
+  - `max_steps`：最大执行步骤数，默认 1000
+  - `headless`：浏览器是否无头模式，默认 false
+  - 其他 Agent 配置：`use_vision`、`max_failures`、`llm_timeout` 等
 - 如修改默认端口/主机，确保在说明中标明启动命令示例。

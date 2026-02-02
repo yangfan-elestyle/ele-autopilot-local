@@ -544,9 +544,12 @@ class TaskActionHandler:
 
         return steps
 
-    def to_cloud_payload(self) -> dict[str, Any]:
+    def to_cloud_payload(self, config: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         生成用于云端上传的完整 payload
+
+        Args:
+            config: 可选的执行配置，将附加到 runtime 中
 
         Returns:
             可序列化的字典
@@ -554,9 +557,13 @@ class TaskActionHandler:
         summary = self.extract_summary()
         steps = self.extract_step_details()
 
+        runtime = _build_runtime_info()
+        if config:
+            runtime["config"] = config
+
         payload: dict[str, Any] = {
             "timestamp": _coerce_epoch_ms(datetime.now()),
-            "runtime": _build_runtime_info(),
+            "runtime": runtime,
             "summary": asdict(summary),
             "steps": [asdict(step) for step in steps],
         }

@@ -7,11 +7,14 @@ Job 模型：持有 Job 数据并负责串行执行多个任务
 - 支持回调 Server 更新状态（Server 集成模式）
 """
 
+import logging
 import uuid
 from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
+
+logger = logging.getLogger(__name__)
 
 from .callback import CallbackClient
 from .config import JobConfig
@@ -116,6 +119,8 @@ class Job(BaseModel):
         self.started_at = datetime.now()
         self.status = TaskStatus.RUNNING
 
+        logger.info(f"Job {self.id} started with config: {self.config.model_dump()}")
+
         try:
             runner = TaskRunner(config=self.config)
             for idx, task_result in enumerate(self.tasks):
@@ -148,7 +153,7 @@ class Job(BaseModel):
                     # 如果有 agent 历史，提取完整执行结果用于回调
                     if hasattr(result, "_agent_history") and result._agent_history:
                         handler = TaskActionHandler(result._agent_history)
-                        cloud_payload = handler.to_cloud_payload()
+                        cloud_payload = handler.to_cloud_payload(config=self.config.model_dump())
 
                 except Exception as e:
                     task_result.status = TaskStatus.FAILED
