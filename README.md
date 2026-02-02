@@ -2,6 +2,13 @@
 
 Local autopilot service for browser automation.
 
+## 命令 TLDR
+
+```bash
+release: uv tool install git+xxx && ele-autopilot serve
+dev: uv run ele-autopilot serve --reload
+```
+
 ## 安装
 
 ```bash
@@ -39,14 +46,15 @@ cd ele-autopilot-local
 uv sync
 
 # 查看帮助
-uv run main.py --help
-uv run main.py serve --help
+uv run ele-autopilot --help
+uv run ele-autopilot serve --help
 
-# 启动服务
+# 启动服务（推荐）
+uv run ele-autopilot serve
+uv run ele-autopilot serve -p 9000 --reload
+
+# 或直接运行 uvicorn
 uv run uvicorn main:app --reload
---or--
-uv run main.py serve
-uv run main.py serve -p 9000 --reload
 ```
 
 ## API 响应格式

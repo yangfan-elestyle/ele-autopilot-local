@@ -551,7 +551,7 @@ wheels = [
 [[package]]
 name = "ele-autopilot-local"
 version = "0.1.2"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "browser-use" },
     { name = "fastapi" },
