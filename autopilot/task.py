@@ -38,6 +38,8 @@ class TaskResult:
     """单个任务的执行记录（结果与错误二选一）"""
 
     task: str
+    task_id: str = ""  # 来源的叶子节点 TaskRow id（Server 集成时使用）
+    task_index: int = 0  # 任务索引（在 flat 数组中的位置）
     status: TaskStatus = TaskStatus.PENDING
     started_at: datetime | None = None
     completed_at: datetime | None = None
@@ -115,6 +117,10 @@ class TaskRunner:
             result = await agent.run(max_steps=self.config.max_steps)
             task_result.result = str(result) if result else None
             task_result.status = TaskStatus.COMPLETED
+
+            # 保存 agent history 用于生成云端 payload
+            # result 是 AgentHistoryList 类型
+            task_result._agent_history = result  # type: ignore[attr-defined]
 
         except Exception as e:
             task_result.status = TaskStatus.FAILED

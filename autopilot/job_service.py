@@ -11,7 +11,7 @@ import asyncio
 import logging
 
 from .config import JobConfig
-from .job import Job
+from .job import Job, TaskInput
 from .task import TaskResult, TaskStatus
 
 logger = logging.getLogger(__name__)
@@ -30,13 +30,21 @@ class JobService:
         self._jobs: dict[str, Job] = {}
         self._lock = asyncio.Lock()
 
-    async def create_job(self, tasks: list[str], config: JobConfig) -> Job:
+    async def create_job(
+        self,
+        tasks: list[str] | list[TaskInput],
+        config: JobConfig,
+        job_id: str | None = None,
+        callback_url: str | None = None,
+    ) -> Job:
         """
         创建并启动 Job
 
         Args:
-            tasks: 任务描述列表
+            tasks: 任务描述列表（字符串列表或 TaskInput 列表）
             config: 执行配置
+            job_id: Server 传入的 job_id（可选，不传则自己生成）
+            callback_url: Server 回调 URL（可选，有则回调）
 
         Returns:
             创建的 Job 实例
@@ -44,7 +52,12 @@ class JobService:
         if not tasks:
             raise ValueError("tasks cannot be empty")
 
-        job = Job.create(tasks=tasks, config=config)
+        job = Job.create(
+            tasks=tasks,
+            config=config,
+            job_id=job_id,
+            callback_url=callback_url,
+        )
 
         async with self._lock:
             self._jobs[job.id] = job

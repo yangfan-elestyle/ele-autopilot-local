@@ -1,14 +1,17 @@
+from .callback import CallbackClient
 from .config import JobConfig
-from .task import TaskStatus, TaskResult, TaskRunner
-from .job import Job
+from .job import Job, TaskInput
 from .job_service import JobService, get_job_service
+from .task import TaskResult, TaskRunner, TaskStatus
 
 __all__ = [
-    "TaskStatus",
+    "CallbackClient",
+    "Job",
+    "JobConfig",
+    "JobService",
+    "TaskInput",
     "TaskResult",
     "TaskRunner",
-    "JobConfig",
-    "Job",
-    "JobService",
+    "TaskStatus",
     "get_job_service",
 ]

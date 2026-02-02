@@ -1,14 +1,28 @@
+from typing import Union
+
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from autopilot import get_job_service, TaskStatus, JobConfig
+from autopilot.job import TaskInput
 
 router = APIRouter(prefix="/autopilot", tags=["autopilot"])
 
 
 class AutopilotRunRequest(JobConfig):
-    """启动 autopilot Job 的请求体（任务列表 + 执行配置）"""
+    """
+    启动 autopilot Job 的请求体
 
-    tasks: list[str]
+    支持两种模式：
+    1. Local 独立模式：tasks 为字符串列表
+    2. Server 集成模式：tasks 为 TaskInput 列表（含 id 和 text）
+
+    Server 集成模式时，job_id 和 callback_url 必填。
+    """
+
+    job_id: str | None = None  # Server 传入则使用，否则 Local 自己生成
+    tasks: list[str] | list[TaskInput]  # 支持字符串列表或 TaskInput 列表
+    callback_url: str | None = None  # 有则回调 Server，无则不回调
 
 
 @router.post("/run")
@@ -17,11 +31,35 @@ async def run_autopilot(request: AutopilotRunRequest):
     启动一个 autopilot Job（后台异步执行，支持多个任务）
 
     立即返回 job_id；可用 /autopilot/status/{job_id} 或 /autopilot/jobs/{job_id} 查询状态。
+
+    支持两种任务格式：
+    - 字符串列表：["任务1", "任务2"] （Local 独立模式）
+    - TaskInput 列表：[{"id": "task-id", "text": "任务1"}] （Server 集成模式）
     """
     service = get_job_service()
     try:
-        config = JobConfig.model_validate(request.model_dump(exclude={"tasks"}))
-        job = await service.create_job(tasks=request.tasks, config=config)
+        # 解析 tasks：支持字符串列表或 TaskInput 列表
+        tasks: list[str] | list[TaskInput] = []
+        for task in request.tasks:
+            if isinstance(task, str):
+                tasks.append(task)
+            elif isinstance(task, dict):
+                # 从字典构造 TaskInput
+                tasks.append(TaskInput(id=task.get("id", ""), text=task.get("text", "")))
+            elif isinstance(task, TaskInput):
+                tasks.append(task)
+            else:
+                raise ValueError(f"Invalid task format: {task}")
+
+        config = JobConfig.model_validate(
+            request.model_dump(exclude={"tasks", "job_id", "callback_url"})
+        )
+        job = await service.create_job(
+            tasks=tasks,
+            config=config,
+            job_id=request.job_id,
+            callback_url=request.callback_url,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

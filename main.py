@@ -2,6 +2,7 @@ import argparse
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 import uvicorn
 
@@ -19,6 +20,15 @@ app = FastAPI(
     title=project_name(),
     description="Local autopilot service",
     version=project_version(),
+)
+
+# 注册 CORS 中间件（允许前端跨域访问）
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 允许所有来源（本地开发环境）
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 注册响应包装中间件
