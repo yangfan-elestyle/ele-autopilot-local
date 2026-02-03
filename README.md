@@ -5,18 +5,21 @@ Local autopilot service for browser automation.
 ## 命令 TLDR
 
 ```bash
-release: uv tool install git+xxx && ele-autopilot serve
-dev: uv run ele-autopilot serve --reload
+# 一行安装运行
+ELE_LLM_API_KEY=<your-gemini-api-key> uvx --from git+https://github.com/yangfan-elestyle/ele-autopilot-local ele-autopilot serve
+
+# 开发模式
+ELE_LLM_API_KEY=<your-gemini-api-key> uv run ele-autopilot serve --reload
 ```
 
 ## 安装
 
 ```bash
 # 从 GitHub 安装
-uv tool install git+https://github.com/yourname/ele-autopilot-local
+uv tool install git+https://github.com/yangfan-elestyle/ele-autopilot-local
 
 # 或本地安装（开发用）
-git clone https://github.com/yourname/ele-autopilot-local
+git clone https://github.com/yangfan-elestyle/ele-autopilot-local
 cd ele-autopilot-local
 uv tool install .
 ```
@@ -39,7 +42,7 @@ ele-autopilot serve --reload           # 开发模式（自动重载）
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourname/ele-autopilot-local
+git clone https://github.com/yangfan-elestyle/ele-autopilot-local
 cd ele-autopilot-local
 
 # 安装依赖
