@@ -65,11 +65,10 @@ class TaskRunner:
         return self._llm
 
     async def _init_browser(self) -> Browser:
-        """初始化浏览器实例（支持通过环境变量指定 Chrome 配置）"""
-        chrome_executable_path = os.getenv("CHROME_EXECUTABLE_PATH")
-        chrome_user_data_dir = os.getenv("CHROME_USER_DATA_DIR")
-        chrome_profile_directory = os.getenv("CHROME_PROFILE_DIRECTORY")
-        profile_directory = chrome_profile_directory or "Default"
+        """初始化浏览器实例"""
+        chrome_executable_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        chrome_user_data_dir = "~/Library/Application Support/Google/Chrome"
+        profile_directory = "Default"
         resolved_user_data_dir = resolve_chrome_user_data_dir(
             chrome_executable_path=chrome_executable_path,
             chrome_user_data_dir=chrome_user_data_dir,

@@ -70,10 +70,9 @@
 
 ## 配置与安全
 
-- `.env` 已被 `.gitignore` 忽略，勿提交密钥；参考 `.env.template` 配置 API Key 与 Chrome 参数。
+- `.env` 已被 `.gitignore` 忽略，勿提交密钥；参考 `.env.template` 配置 API Key。
 - 环境变量配置：
   - `ELE_LLM_API_KEY`：Gemini API 密钥（必需）
-  - `CHROME_EXECUTABLE_PATH`、`CHROME_USER_DATA_DIR`（支持 `~` 展开）、`CHROME_PROFILE_DIRECTORY`：Chrome 可选配置
 - API 运行时配置（通过 HTTP 请求传入，见 `autopilot/config.py`）：
   - `gemini_model`：Gemini 模型名称，默认 `gemini-3-flash-preview`
   - `max_steps`：最大执行步骤数，默认 1000
