@@ -60,6 +60,7 @@ class TaskRunner:
                 model=self.config.gemini_model,
                 api_key=os.getenv("ELE_LLM_API_KEY"),
                 temperature=0.0,
+                max_output_tokens=65536,
             )
         return self._llm
 
