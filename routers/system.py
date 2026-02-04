@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import os
 import time
 
-from app_meta import project_name, project_version
+from autopilot.app_meta import project_name, project_version
 
 router = APIRouter(prefix="/system", tags=["system"])
 

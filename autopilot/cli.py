@@ -1,3 +1,8 @@
+"""CLI 入口点和 FastAPI 应用定义。
+
+此模块用于 `uv tool install` 或 `uvx` 安装后的命令行入口。
+"""
+
 import argparse
 
 from fastapi import FastAPI, HTTPException
@@ -6,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 import uvicorn
 
-from app_meta import project_name, project_version
+from autopilot.app_meta import project_name, project_version
 from routers import system, autopilot
 from middleware import (
     ResponseWrapperMiddleware,
@@ -15,6 +20,7 @@ from middleware import (
     pydantic_exception_handler,
     generic_exception_handler,
 )
+
 
 app = FastAPI(
     title=project_name(),
@@ -72,7 +78,7 @@ def cli():
     args = parser.parse_args()
 
     if args.command == "serve":
-        uvicorn.run("main:app", host=args.host, port=args.port, reload=args.reload)
+        uvicorn.run("autopilot.cli:app", host=args.host, port=args.port, reload=args.reload)
     else:
         parser.print_help()
 

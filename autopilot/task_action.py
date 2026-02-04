@@ -317,7 +317,7 @@ def _build_runtime_info() -> dict[str, Any]:
     }
 
     try:
-        from app_meta import project_name, project_version
+        from autopilot.app_meta import project_name, project_version
 
         info["app"] = {"name": project_name(), "version": project_version()}
     except Exception:

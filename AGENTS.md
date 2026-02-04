@@ -15,24 +15,24 @@
 
 ## 项目结构与模块组织
 
-- `main.py`：FastAPI 应用入口与 CLI；`app_meta.py` 提供项目信息与版本。
+- `autopilot/cli.py`：FastAPI 应用入口与 CLI，使用 `importlib.metadata` 获取版本信息。
 - `routers/`：对外 API 路由（如 `/system/*`、`/autopilot/*`）。
 - `middleware/`：统一响应包装与异常处理（`{code, message, data}`）。
 - `autopilot/`：Job/Task 执行核心（`job_service.py`、`job.py`、`task.py`、`task_action.py`、`config.py`）。
 - `schemas/`：Pydantic 请求/响应模型（如需复用/对外暴露的结构优先放这里）。
 - `langchain/`：LLM 集成封装；`scripts/help/`：本地 CLI 辅助脚本（如 `run-cli.py`）。
 - 依赖锁在 `uv.lock`；配置示例在 `.env.template`，真实配置使用 `.env`。
-- 新增路由文件放在 `routers/`，并在 `main.py` 中注册；新增模型放在 `schemas/` 以便复用。
+- 新增路由文件放在 `routers/`，并在 `autopilot/cli.py` 中注册；新增模型放在 `schemas/` 以便复用。
 
 ## 构建、测试与开发命令
 
 - `uv sync`：安装/同步依赖（Python 3.12+）。
 - `uv tool install .`：本地安装 CLI（命令为 `ele-autopilot`）。
-- `uv run main.py serve --reload`：开发模式启动服务。
-- `uv run main.py serve -p 9000`：指定端口启动服务。
-- `uv run uvicorn main:app --reload`：直接用 Uvicorn 启动。
+- `uv run python -m autopilot.cli serve --reload`：开发模式启动服务。
+- `uv run python -m autopilot.cli serve -p 9000`：指定端口启动服务。
+- `uv run uvicorn autopilot.cli:app --reload`：直接用 Uvicorn 启动。
 - `ele-autopilot serve -p 9000`：安装工具后启动服务。
-- `uv run main.py --help`、`uv run main.py serve --help` 或 `ele-autopilot --help`：查看 CLI 帮助。
+- `uv run python -m autopilot.cli --help` 或 `ele-autopilot --help`：查看 CLI 帮助。
 
 ## 运行与调试提示
 

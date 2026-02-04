@@ -57,7 +57,7 @@ uv run ele-autopilot serve
 uv run ele-autopilot serve -p 9000 --reload
 
 # 或直接运行 uvicorn
-uv run uvicorn main:app --reload
+uv run uvicorn autopilot.cli:app --reload
 ```
 
 ## API 响应格式
