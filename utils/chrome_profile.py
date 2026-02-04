@@ -85,7 +85,9 @@ def resolve_chrome_user_data_dir(
         and "chrome" in chrome_executable_path.lower()
         and is_system_chrome_user_data_dir(expanded)
     ):
-        persistent_dir = Path.home() / ".ele-autopilot" / "browser-use-user-data-dir-persist"
+        persistent_dir = (
+            Path.home() / ".ele-autopilot" / "browser-use-user-data-dir-persist"
+        )
         did_seed = seed_persistent_profile_if_needed(
             src_user_data_dir=expanded,
             dst_user_data_dir=persistent_dir,

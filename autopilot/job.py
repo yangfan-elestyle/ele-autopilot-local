@@ -153,7 +153,9 @@ class Job(BaseModel):
                     # 如果有 agent 历史，提取完整执行结果用于回调
                     if hasattr(result, "_agent_history") and result._agent_history:
                         handler = TaskActionHandler(result._agent_history)
-                        cloud_payload = handler.to_cloud_payload(config=self.config.model_dump())
+                        cloud_payload = handler.to_cloud_payload(
+                            config=self.config.model_dump()
+                        )
 
                 except Exception as e:
                     task_result.status = TaskStatus.FAILED

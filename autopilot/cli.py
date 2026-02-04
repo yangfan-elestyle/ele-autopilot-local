@@ -78,7 +78,9 @@ def cli():
     args = parser.parse_args()
 
     if args.command == "serve":
-        uvicorn.run("autopilot.cli:app", host=args.host, port=args.port, reload=args.reload)
+        uvicorn.run(
+            "autopilot.cli:app", host=args.host, port=args.port, reload=args.reload
+        )
     else:
         parser.print_help()
 

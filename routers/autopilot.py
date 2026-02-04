@@ -45,7 +45,9 @@ async def run_autopilot(request: AutopilotRunRequest):
                 tasks.append(task)
             elif isinstance(task, dict):
                 # 从字典构造 TaskInput
-                tasks.append(TaskInput(id=task.get("id", ""), text=task.get("text", "")))
+                tasks.append(
+                    TaskInput(id=task.get("id", ""), text=task.get("text", ""))
+                )
             elif isinstance(task, TaskInput):
                 tasks.append(task)
             else:

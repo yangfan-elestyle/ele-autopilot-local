@@ -66,7 +66,9 @@ class TaskRunner:
 
     async def _init_browser(self) -> Browser:
         """初始化浏览器实例"""
-        chrome_executable_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        chrome_executable_path = (
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        )
         chrome_user_data_dir = "~/Library/Application Support/Google/Chrome"
         profile_directory = "Default"
         resolved_user_data_dir = resolve_chrome_user_data_dir(
@@ -137,7 +139,9 @@ class TaskRunner:
 
             # 构建 Agent 参数：只传递 config 中有值的参数，其余使用 Agent 默认值
             agent_kwargs = self._build_agent_kwargs()
-            logger.info(f"Creating Agent with task={task!r}, agent_kwargs={agent_kwargs}")
+            logger.info(
+                f"Creating Agent with task={task!r}, agent_kwargs={agent_kwargs}"
+            )
             agent = Agent(task=task, llm=llm, browser=browser, **agent_kwargs)
 
             result = await agent.run(max_steps=self.config.max_steps)
