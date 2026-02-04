@@ -151,7 +151,6 @@ activemq-data/
 .env
 .envrc
 .venv
-browser-use-user-data-dir-persist/
 env/
 venv/
 ENV/
