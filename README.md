@@ -6,7 +6,7 @@ Local autopilot service for browser automation.
 
 ```bash
 # 一行安装运行
-ELE_LLM_API_KEY=<your-gemini-api-key> uvx --from git+https://github.com/yangfan-elestyle/ele-autopilot-local ele-autopilot serve
+ELE_LLM_API_KEY=<your-gemini-api-key> uvx --refresh --from git+https://github.com/yangfan-elestyle/ele-autopilot-local ele-autopilot serve
 
 # 开发模式
 ELE_LLM_API_KEY=<your-gemini-api-key> uv run ele-autopilot serve --reload
