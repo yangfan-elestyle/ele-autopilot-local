@@ -154,7 +154,7 @@ AgentHistoryList
 ====================================================================
 
 1) 关于 action 名称
-   - 本项目依赖的 browser-use(==0.11.3) 内置动作名称以实际注册为准，
+   - 本项目依赖的 browser-use(>=0.11.9) 内置动作名称以实际注册为准，
      常见为: navigate/search/click/input/scroll/done/read_file/write_file/...；
      不是 click_element / input_text 这类名字。
 

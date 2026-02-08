@@ -29,7 +29,7 @@ def seed_persistent_profile_if_needed(
     """
     将系统 Chrome profile “种子复制”到一个可持久化的自动化目录（仅首次执行）。
 
-    背景：browser-use==0.11.3 会把传入的 Chrome user_data_dir 复制到临时目录运行，
+    背景：browser-use>=0.11.9 会把传入的 Chrome user_data_dir 复制到临时目录运行，
     以避免系统 profile 锁冲突/损坏；但这会导致登录态无法持久化。
     """
     log = log or logger

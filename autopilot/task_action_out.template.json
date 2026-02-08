@@ -7,7 +7,7 @@
     },
     "platform": "macOS-26.3-arm64-arm-64bit",
     "packages": {
-      "browser-use": "0.11.3",
+      "browser-use": "0.11.9",
       "fastapi": "0.128.0",
       "langchain-openai": "1.1.7"
     },

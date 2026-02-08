@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-- ele-autopilot-local 是本地浏览器自动化服务，基于 `browser-use==0.11.3`。
+- ele-autopilot-local 是本地浏览器自动化服务，基于 `browser-use>=0.11.9`。
 - 对外提供 FastAPI HTTP API，通过 LLM Agent 驱动浏览器执行任务；任务以 Job 形式异步运行，可查询/删除。
 
 ## 架构与核心流程
@@ -47,7 +47,7 @@
 
 ## browser-use 集成注意
 
-- 依赖版本固定为 `browser-use==0.11.3`（见 `pyproject.toml`）。
+- 依赖版本为 `browser-use>=0.11.9`（见 `pyproject.toml`）。
 - 常见 action 名称：`navigate`、`search`、`click`、`input`、`scroll`、`done` 等；不要使用 `click_element` / `input_text` 这类名字。
 - 关键类型：`Agent`、`Browser`、`AgentHistoryList`（可用 `final_result()`、`is_done()`、`model_actions()` 等做结果提取/调试）。
 
