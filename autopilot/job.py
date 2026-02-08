@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +44,9 @@ class Job(BaseModel):
     callback_url: str | None = None  # Server 回调 URL（有则回调，无则不回调）
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    _runner: TaskRunner | None = PrivateAttr(default=None)
+    _stop_job: bool = PrivateAttr(default=False)
 
     @classmethod
     def create(
@@ -91,6 +94,48 @@ class Job(BaseModel):
             callback_url=callback_url,
         )
 
+    def stop(self, task_id: str | None = None) -> dict:
+        """
+        停止 Job 或当前正在运行的指定 task
+
+        Args:
+            task_id: 为 None 时停止整个 Job（当前 task 失败 + 剩余 task 跳过）。
+                     有值时只停止当前正在运行且 task_id 匹配的 task，后续 task 继续。
+        """
+        if self.status != TaskStatus.RUNNING:
+            return {
+                "success": False,
+                "message": f"Job is not running (status: {self.status})",
+            }
+
+        # 找到当前正在运行的 task
+        running_task = next(
+            (t for t in self.tasks if t.status == TaskStatus.RUNNING), None
+        )
+
+        if task_id is not None:
+            # 校验 task_id 是否匹配当前正在运行的 task
+            if running_task is None or running_task.task_id != task_id:
+                return {
+                    "success": False,
+                    "message": f"Task {task_id} is not currently running",
+                }
+
+        # 停止整个 Job 时额外设置标志，run 循环会跳过剩余 task
+        if task_id is None:
+            self._stop_job = True
+
+        runner = self._runner
+        if runner is not None:
+            runner.stop_current_task()
+
+        return {
+            "success": True,
+            "message": "Job stop signal sent" if task_id is None else "Stop signal sent to running task",
+            "task_id": running_task.task_id if running_task else None,
+            "task_index": running_task.task_index if running_task else None,
+        }
+
     def _update_status(self):
         """按任务状态聚合更新 Job 状态（RUNNING > COMPLETED > FAILED > PENDING）"""
         if not self.tasks:
@@ -123,11 +168,30 @@ class Job(BaseModel):
 
         try:
             runner = TaskRunner(config=self.config)
+            self._runner = runner
             for idx, task_result in enumerate(self.tasks):
+                task_result.task_index = idx
+
+                # 检查 Job 是否被停止，跳过剩余 task
+                if self._stop_job:
+                    task_result.status = TaskStatus.FAILED
+                    task_result.started_at = datetime.now()
+                    task_result.completed_at = task_result.started_at
+                    task_result.error = "Job stopped by user request"
+                    await callback.report_task_update(
+                        task_index=idx,
+                        task_id=task_result.task_id,
+                        status=task_result.status.value,
+                        result=None,
+                        error=task_result.error,
+                        started_at=task_result.started_at,
+                        completed_at=task_result.completed_at,
+                    )
+                    continue
+
                 # 记录开始时间，便于外部轮询展示进度
                 task_result.status = TaskStatus.RUNNING
                 task_result.started_at = datetime.now()
-                task_result.task_index = idx
 
                 # 上报 task 开始到 Server（此时 result 为 None）
                 await callback.report_task_update(
@@ -183,6 +247,8 @@ class Job(BaseModel):
                     t.completed_at = completed_at
                     t.error = error
         finally:
+            self._runner = None
+            self._stop_job = False
             self.completed_at = datetime.now()
             self._update_status()
 

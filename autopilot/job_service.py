@@ -96,6 +96,17 @@ class JobService:
         job = await self.get_job(job_id)
         return job.tasks
 
+    async def stop(self, job_id: str, task_id: str | None = None) -> dict:
+        """
+        停止 Job 或指定 task
+
+        Args:
+            job_id: Job ID
+            task_id: 指定 task_id 则只停止该 task，不传则停止整个 Job
+        """
+        job = await self.get_job(job_id)
+        return job.stop(task_id=task_id)
+
     async def delete_job(self, job_id: str) -> None:
         """
         删除 Job

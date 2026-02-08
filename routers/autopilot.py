@@ -101,6 +101,33 @@ async def list_autopilot_jobs(status: TaskStatus | None = None):
     return await service.list_jobs(status=status)
 
 
+class StopRequest(BaseModel):
+    """停止 Job 或指定 task 的请求体"""
+
+    task_id: str | None = None  # 有值则停止指定 task，无值则停止整个 Job
+
+
+@router.post("/jobs/{job_id}/stop")
+async def stop_job(job_id: str, request: StopRequest | None = None):
+    """
+    停止 Job 或指定 task
+
+    行为：
+    - 不传 task_id（或空 body）：停止整个 Job，当前 task 失败，剩余 task 全部跳过
+    - 传 task_id：只停止当前正在 RUNNING 且 task_id 匹配的 task，后续 task 继续执行
+      - 若该 task 不在 RUNNING 状态，返回 400 错误
+    """
+    service = get_job_service()
+    task_id = request.task_id if request else None
+    try:
+        result = await service.stop(job_id, task_id=task_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+
+
 @router.delete("/jobs/{job_id}")
 async def delete_autopilot_job(job_id: str):
     """删除一个 Job 记录（运行中的 Job 不允许删除）"""

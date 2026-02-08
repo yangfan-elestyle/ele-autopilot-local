@@ -52,6 +52,15 @@ class TaskRunner:
     def __init__(self, config: JobConfig):
         self.config = config
         self._llm = None
+        self._current_agent: Agent | None = None
+
+    def stop_current_task(self) -> bool:
+        """停止当前正在执行的 task。返回 True 表示已发送停止信号。"""
+        agent = self._current_agent
+        if agent is not None:
+            agent.stop()
+            return True
+        return False
 
     def _init_llm(self):
         """初始化 LLM，model 通过 config 传入，api_key 通过环境变量配置"""
@@ -143,10 +152,18 @@ class TaskRunner:
                 f"Creating Agent with task={task!r}, agent_kwargs={agent_kwargs}"
             )
             agent = Agent(task=task, llm=llm, browser=browser, **agent_kwargs)
+            self._current_agent = agent
 
             result = await agent.run(max_steps=self.config.max_steps)
+
+            # 检查 agent 是否被外部 stop（且未自然完成）
+            if agent.state.stopped and not (result and result.is_done()):
+                task_result.status = TaskStatus.FAILED
+                task_result.error = "Task stopped by user request"
+            else:
+                task_result.status = TaskStatus.COMPLETED
+
             task_result.result = str(result) if result else None
-            task_result.status = TaskStatus.COMPLETED
 
             # 保存 agent history 用于生成云端 payload
             # result 是 AgentHistoryList 类型
@@ -156,6 +173,7 @@ class TaskRunner:
             task_result.status = TaskStatus.FAILED
             task_result.error = str(e)
         finally:
+            self._current_agent = None
             await self._cleanup(browser)
 
         task_result.completed_at = datetime.now()
