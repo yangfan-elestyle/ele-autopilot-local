@@ -19,6 +19,20 @@ def is_system_chrome_user_data_dir(user_data_dir: Path) -> bool:
     )
 
 
+_SESSION_RESTORE_NAMES = frozenset({
+    "Current Session",
+    "Current Tabs",
+    "Last Session",
+    "Last Tabs",
+    "Sessions",
+})
+
+
+def _ignore_session_files(_dir: str, entries: list[str]) -> set[str]:
+    """copytree ignore 回调：排除 Chrome 会话恢复相关文件/目录，避免复制后打开旧 tabs。"""
+    return _SESSION_RESTORE_NAMES & set(entries)
+
+
 def seed_persistent_profile_if_needed(
     *,
     src_user_data_dir: Path,
@@ -27,7 +41,7 @@ def seed_persistent_profile_if_needed(
     log: logging.Logger | None = None,
 ) -> bool:
     """
-    将系统 Chrome profile “种子复制”到一个可持久化的自动化目录（仅首次执行）。
+    将系统 Chrome profile "种子复制"到一个可持久化的自动化目录（仅首次执行）。
 
     背景：browser-use>=0.11.9 会把传入的 Chrome user_data_dir 复制到临时目录运行，
     以避免系统 profile 锁冲突/损坏；但这会导致登录态无法持久化。
@@ -43,7 +57,12 @@ def seed_persistent_profile_if_needed(
 
     try:
         if src_profile_dir.exists():
-            shutil.copytree(src_profile_dir, dst_profile_dir, dirs_exist_ok=True)
+            shutil.copytree(
+                src_profile_dir,
+                dst_profile_dir,
+                dirs_exist_ok=True,
+                ignore=_ignore_session_files,
+            )
         else:
             dst_profile_dir.mkdir(parents=True, exist_ok=True)
     except Exception as e:
