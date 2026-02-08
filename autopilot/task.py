@@ -8,11 +8,13 @@
 
 import logging
 import os
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any
 
+import psutil
 from browser_use import Agent, Browser
 from browser_use.llm import ChatGoogle
 
@@ -46,13 +48,154 @@ class TaskResult:
     error: str | None = None
 
 
+@dataclass
+class _ShouldStopState:
+    """should_stop 回调的内部状态"""
+
+    browser_pid: int | None = None
+    had_focus: bool = False
+    focus_lost_since: float | None = None
+
+
 class TaskRunner:
     """单个任务执行器：为每次执行创建 Agent，并负责资源清理"""
+
+    _FOCUS_LOSS_GRACE_SECONDS = 1.5
+    _FOCUS_RECOVERY_TIMEOUT_SECONDS = 0.5
 
     def __init__(self, config: JobConfig):
         self.config = config
         self._llm = None
         self._current_agent: Agent | None = None
+        self._browser_closed: bool = False
+
+    @property
+    def browser_closed(self) -> bool:
+        """浏览器是否被用户关闭"""
+        return self._browser_closed
+
+    @staticmethod
+    def _get_browser_pid(browser: Browser) -> int | None:
+        """从 BrowserSession 获取本地浏览器进程 PID"""
+        try:
+            watchdog = browser._local_browser_watchdog
+            if watchdog and watchdog._subprocess:
+                return watchdog._subprocess.pid
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _acquire_browser_pid(browser: Browser, current_pid: int | None) -> int | None:
+        """懒加载浏览器 PID（进程启动后才可获取）"""
+        if current_pid is not None:
+            return current_pid
+
+        pid = TaskRunner._get_browser_pid(browser)
+        if pid is not None:
+            logger.info(f"Browser process watchdog acquired pid={pid}")
+        return pid
+
+    def _mark_browser_closed(self, message: str, *args) -> bool:
+        """统一记录浏览器关闭并返回 stop 信号"""
+        logger.warning(message, *args)
+        self._browser_closed = True
+        return True
+
+    def _is_browser_process_closed(self, browser_pid: int | None) -> bool:
+        """检查 Chrome 进程是否已退出"""
+        if browser_pid is None:
+            return False
+
+        try:
+            proc = psutil.Process(browser_pid)
+            if not proc.is_running() or proc.status() in (
+                psutil.STATUS_ZOMBIE,
+                psutil.STATUS_DEAD,
+            ):
+                return self._mark_browser_closed(
+                    "Browser process %s is no longer running", browser_pid
+                )
+        except psutil.NoSuchProcess:
+            return self._mark_browser_closed(
+                "Browser process %s no longer exists", browser_pid
+            )
+        except psutil.AccessDenied:
+            logger.warning("Access denied checking browser process %s", browser_pid)
+        except Exception:
+            pass
+
+        return False
+
+    @staticmethod
+    async def _try_recover_focus(browser: Browser, timeout_seconds: float) -> bool:
+        """尝试通过 browser-use 内置机制恢复 focus"""
+        session_manager = getattr(browser, "session_manager", None)
+        if session_manager is None:
+            return False
+
+        try:
+            recovered = await session_manager.ensure_valid_focus(timeout=timeout_seconds)
+        except Exception:
+            return False
+
+        return bool(recovered and browser.agent_focus_target_id is not None)
+
+    async def _is_focus_lost_persistently(
+        self, browser: Browser, state: _ShouldStopState
+    ) -> bool:
+        """检查 focus 是否持续丢失（包含宽限与恢复）"""
+        if browser.agent_focus_target_id is not None:
+            state.had_focus = True
+            state.focus_lost_since = None
+            return False
+
+        if not state.had_focus:
+            return False
+
+        now = time.monotonic()
+        if state.focus_lost_since is None:
+            state.focus_lost_since = now
+            return False
+
+        elapsed = now - state.focus_lost_since
+        if elapsed < self._FOCUS_LOSS_GRACE_SECONDS:
+            return False
+
+        recovered = await TaskRunner._try_recover_focus(
+            browser, timeout_seconds=self._FOCUS_RECOVERY_TIMEOUT_SECONDS
+        )
+        if recovered:
+            state.focus_lost_since = None
+            return False
+
+        return self._mark_browser_closed(
+            "Browser lost agent focus for %.1fs - tab/window may be closed by user",
+            elapsed,
+        )
+
+    def _make_should_stop_callback(self, browser: Browser):
+        """构建 Agent should_stop 回调：检测浏览器是否仍可用
+
+        检测两种场景：
+        1. Chrome app 被关闭 → psutil 检测进程消失
+        2. Tab/Window 被关闭但 Chrome 还在 → agent_focus_target_id 丢失
+
+        使用闭包延迟获取 PID，因为浏览器进程在 Agent.run() 过程中才实际启动。
+        """
+        state = _ShouldStopState()
+
+        async def should_stop() -> bool:
+            state.browser_pid = TaskRunner._acquire_browser_pid(
+                browser, state.browser_pid
+            )
+
+            if self._is_browser_process_closed(state.browser_pid):
+                return True
+
+            return await self._is_focus_lost_persistently(browser, state)
+
+        return should_stop
 
     def stop_current_task(self) -> bool:
         """停止当前正在执行的 task。返回 True 表示已发送停止信号。"""
@@ -140,6 +283,7 @@ class TaskRunner:
         task_result = TaskResult(task=task)
         task_result.status = TaskStatus.RUNNING
         task_result.started_at = datetime.now()
+        self._browser_closed = False
 
         browser: Browser | None = None
         try:
@@ -151,7 +295,14 @@ class TaskRunner:
             logger.info(
                 f"Creating Agent with task={task!r}, agent_kwargs={agent_kwargs}"
             )
-            agent = Agent(task=task, llm=llm, browser=browser, **agent_kwargs)
+
+            agent = Agent(
+                task=task,
+                llm=llm,
+                browser=browser,
+                register_should_stop_callback=self._make_should_stop_callback(browser),
+                **agent_kwargs,
+            )
             self._current_agent = agent
 
             result = await agent.run(max_steps=self.config.max_steps)
@@ -159,7 +310,7 @@ class TaskRunner:
             # 检查 agent 是否被外部 stop（且未自然完成）
             if agent.state.stopped and not (result and result.is_done()):
                 task_result.status = TaskStatus.FAILED
-                task_result.error = "Task stopped by user request"
+                task_result.error = "Task stopped"
             else:
                 task_result.status = TaskStatus.COMPLETED
 

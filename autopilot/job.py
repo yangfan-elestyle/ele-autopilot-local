@@ -47,6 +47,7 @@ class Job(BaseModel):
 
     _runner: TaskRunner | None = PrivateAttr(default=None)
     _stop_job: bool = PrivateAttr(default=False)
+    _stop_reason: str = PrivateAttr(default="")
 
     @classmethod
     def create(
@@ -124,6 +125,7 @@ class Job(BaseModel):
         # 停止整个 Job 时额外设置标志，run 循环会跳过剩余 task
         if task_id is None:
             self._stop_job = True
+            self._stop_reason = "Job stopped by user request"
 
         runner = self._runner
         if runner is not None:
@@ -177,7 +179,7 @@ class Job(BaseModel):
                     task_result.status = TaskStatus.FAILED
                     task_result.started_at = datetime.now()
                     task_result.completed_at = task_result.started_at
-                    task_result.error = "Job stopped by user request"
+                    task_result.error = self._stop_reason
                     await callback.report_task_update(
                         task_index=idx,
                         task_id=task_result.task_id,
@@ -214,6 +216,15 @@ class Job(BaseModel):
                     task_result.error = result.error
                     task_result.completed_at = result.completed_at
 
+                    # 浏览器被用户关闭 → 停止整个 Job（不覆盖已有的 remote stop）
+                    if runner.browser_closed and not self._stop_job:
+                        self._stop_job = True
+                        self._stop_reason = "Browser was closed during task execution"
+
+                    # 由 Job 层统一设置停止原因（覆盖 TaskRunner 的通用消息）
+                    if self._stop_job and task_result.status == TaskStatus.FAILED:
+                        task_result.error = self._stop_reason
+
                     # 如果有 agent 历史，提取完整执行结果用于回调
                     if hasattr(result, "_agent_history") and result._agent_history:
                         handler = TaskActionHandler(result._agent_history)
@@ -249,6 +260,7 @@ class Job(BaseModel):
         finally:
             self._runner = None
             self._stop_job = False
+            self._stop_reason = ""
             self.completed_at = datetime.now()
             self._update_status()
 
