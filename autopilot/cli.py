@@ -11,6 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 import uvicorn
 
+import patches
+
+patches.apply_all()  # 第三方库 monkey-patch，必须在业务模块之前加载
+
 from autopilot.app_meta import project_name, project_version
 from routers import system, autopilot
 from middleware import (
