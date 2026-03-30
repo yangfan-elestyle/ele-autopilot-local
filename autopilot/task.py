@@ -236,7 +236,10 @@ class TaskRunner:
             profile_directory=profile_directory,
             headless=self.config.headless,
             keep_alive=False,
-            args=["--start-maximized"],
+            args=["--start-maximized", "--test-type=webdriver"],
+            # If the bad-flags prompt still needs a targeted workaround later,
+            # restore ignore_default_args here to drop only
+            # `--extensions-on-chrome-urls` from browser-use defaults.
         )
 
     async def _cleanup(self, browser: Browser | None):
