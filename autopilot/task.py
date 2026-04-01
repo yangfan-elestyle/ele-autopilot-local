@@ -20,6 +20,7 @@ from browser_use.llm import ChatGoogle
 
 from utils.chrome_profile import resolve_chrome_user_data_dir
 
+from .bundled_assets import resolve_bundled_asset_path
 from .config import JobConfig
 
 logger = logging.getLogger(__name__)
@@ -281,7 +282,6 @@ class TaskRunner:
                 kwargs[agent_param] = value
 
         return kwargs
-
     async def run(self, task: str) -> TaskResult:
         """执行单个任务并返回可序列化的执行记录"""
         task_result = TaskResult(task=task)
@@ -305,6 +305,7 @@ class TaskRunner:
                 llm=llm,
                 browser=browser,
                 register_should_stop_callback=self._make_should_stop_callback(browser),
+                available_file_paths=[resolve_bundled_asset_path("miku.jpg")],
                 **agent_kwargs,
             )
             self._current_agent = agent
